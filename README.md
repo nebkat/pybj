@@ -5,7 +5,7 @@
 - Copyright: (C) Qianqian Fang (2020-2022) <q.fang at neu.edu>
 - Copyright: (C) Iotic Labs Ltd. (2016-2019) <vilnis.termanis at iotic-labs.com>
 - License: Apache License, Version 2.0
-- Version: 0.3.4
+- Version: 0.4.0
 - URL: https://pypi.org/project/bjdata/
 - Github: https://github.com/NeuroJSON/pybj
 - BJData Spec Version: [V1 Draft 2](https://neurojson.org/bjdata/draft2)
@@ -13,8 +13,8 @@
 
 [![Build Status](https://travis-ci.com/NeuroJSON/pybj.svg?branch=master)](https://travis-ci.com/NeuroJSON/pybj)
 
-This is a Python v3.2+ (and 2.7+) [Binary JData](http://neurojson.org) based on 
-the [Draft-2](Binary_JData_Specification.md) specification.
+This is a Python v3.2+ (and 2.7+) [Binary JData](https://neurojson.org) encoder
+and decoder based on the [Draft-2](Binary_JData_Specification.md) specification.
 
 ## Installing / packaging
 ```shell
@@ -32,7 +32,7 @@ pip3 install bjdata --user
 ## To get from PyPI via python
 python3 -mpip install bjdata
 
-## To only build extension modules inline (e.g. in repository)
+## To only build extension modules in-place (e.g. in repository)
 python3 setup.py build_ext -i
 
 ## To build & install globally
@@ -127,6 +127,7 @@ pip install -e .[dev]
 - Strongly-typed containers are only supported by the decoder (apart from for 
   **bytes**/**bytearray**) and not for No-Op.
 - Encoder/decoder extensions are not supported at this time.
+- Encoder/decoder only support numpy NDarrays and scalars, other numpy types are not supported.
 
 
 ## Acknowledgement

@@ -73,7 +73,7 @@ COMPILE_ARGS = ['-std=c99', '-DUSE__BJDATA']
 
 setup(
     name='bjdata',
-    version='0.3.4',
+    version='0.4.0',
     description='Binary JData and UBJSON encoder/decoder',
     long_description=load_description('README.md'),
     long_description_content_type='text/markdown',
@@ -117,6 +117,7 @@ setup(
         'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: 3.8',
+        'Programming Language :: Python :: 3.9',
         'Topic :: Software Development :: Libraries',
         'Topic :: Software Development :: Libraries :: Python Modules'
     ]

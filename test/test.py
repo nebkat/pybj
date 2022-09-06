@@ -220,9 +220,9 @@ class TestEncodeDecodePlain(TestCase):  # pylint: disable=too-many-public-method
                 '-1.2345e67890'):
             # minimum length because: marker + length marker + length + value
             self.check_enc_dec(Decimal(value), 4, length_greater_or_equal=True)
-        # cannot compare equality, so test separately (since these evaluate to "NULL"
-        #for value in ('nan', '-inf', 'inf'):
-        #    self.assertEqual(self.bjdloadb(self.bjddumpb(Decimal(value))), None)
+        # cannot compare equality, so test separately
+        for value in ('nan', '-inf', 'inf'):
+            self.assertEqual(str(self.bjdloadb(self.bjddumpb(float(value)))), value)
 
     def test_float(self):
         # insufficient length
@@ -248,9 +248,10 @@ class TestEncodeDecodePlain(TestCase):  # pylint: disable=too-many-public-method
                                9 if type_ == TYPE_FLOAT32 else total_size,
                                approximate=True,
                                expected_type=(TYPE_FLOAT64 if type_ == TYPE_FLOAT32 else type_))
-        #for value in ('nan', '-inf', 'inf'):
-        #    for no_float32 in (True, False):
-        #        self.assertEqual(self.bjdloadb(self.bjddumpb(float(value), no_float32=no_float32)), None)
+        for value in ('nan', '-inf', 'inf'):
+            for no_float32 in (True, False):
+                self.assertEqual(str(self.bjdloadb(self.bjddumpb(float(value), no_float32=no_float32))), value)
+
         # value which results in high_prec usage
         for no_float32 in (True, False):
             self.check_enc_dec(2.22e-308, 4, expected_type=TYPE_HIGH_PREC, length_greater_or_equal=True,

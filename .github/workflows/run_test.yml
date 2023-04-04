@@ -16,8 +16,8 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
       - name: Install packages
-        run: >
-          sudo apt-get install python-numpy python3-numpy
+        run: |
+          sudo apt-get install python-numpy python3-numpy \
                cython3 python-setuptools python3-setuptools lcov
       - name: Install dependencies
         run: |

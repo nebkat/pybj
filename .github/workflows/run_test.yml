@@ -12,9 +12,20 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: Set up Python ${{ matrix.python-version }}
+        if: startsWith(matrix.python-version, '3.')
         uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
+      - name: Setup Python2 (Linux)
+￼       if: matrix.python-version == '2.7' && startsWith(matrix.os, 'ubuntu')
+￼       run: |
+          sudo ln -fs python2 /usr/bin/python
+￼         sudo apt-get update
+￼         sudo apt-get install python-setuptools python-dev
+￼         curl https://bootstrap.pypa.io/pip/2.7/get-pip.py --output get-pip.py
+￼         sudo python2 get-pip.py
+￼         ls -l /usr/bin/pip* /usr/local/bin/pip*
+￼         which pip
       - name: Install packages
         run: |
           sudo apt-get install cython3 lcov

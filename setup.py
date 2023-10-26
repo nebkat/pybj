@@ -1,4 +1,4 @@
-# Copyright (c) 2020-2022 Qianqian Fang <q.fang at neu.edu>. All rights reserved.
+# Copyright (c) 2020-2023 Qianqian Fang <q.fang at neu.edu>. All rights reserved.
 # Copyright (c) 2016-2019 Iotic Labs Ltd. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -73,7 +73,7 @@ COMPILE_ARGS = ['-std=c99', '-DUSE__BJDATA']
 
 setup(
     name='bjdata',
-    version='0.4.0',
+    version='0.4.1',
     description='Binary JData and UBJSON encoder/decoder',
     long_description=load_description('README.md'),
     long_description_content_type='text/markdown',

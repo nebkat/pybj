@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020-2022 Qianqian Fang <q.fang at neu.edu>. All rights reserved.
+ * Copyright (c) 2020-2023 Qianqian Fang <q.fang at neu.edu>. All rights reserved.
  * Copyright (c) 2016-2019 Iotic Labs Ltd. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -317,16 +317,14 @@ static int _encode_NDarray(PyObject *obj, _bjdata_encoder_buffer_t *buffer) {
         WRITE_CHAR_OR_BAIL((char)marker);
     }
     WRITE_CHAR_OR_BAIL(CONTAINER_COUNT);
-    if(ndim == 1) {
-        BAIL_ON_NONZERO(_encode_longlong(bytes, buffer));
-    } else {
-        WRITE_CHAR_OR_BAIL(ARRAY_START);
-        for(int i=0 ; i<ndim; i++)
-            _encode_longlong(dims[i], buffer);
-        if(type == NPY_UNICODE)
-            _encode_longlong(4, buffer);
-        WRITE_CHAR_OR_BAIL(ARRAY_END);
-    }
+
+    WRITE_CHAR_OR_BAIL(ARRAY_START);
+    for(int i=0 ; i<ndim; i++)
+        _encode_longlong(dims[i], buffer);
+    if(type == NPY_UNICODE)
+        _encode_longlong(4, buffer);
+    WRITE_CHAR_OR_BAIL(ARRAY_END);
+
     WRITE_OR_BAIL(PyArray_BYTES(arr), bytes*total);
     Py_DECREF(arr);
     // no ARRAY_END since length was specified

@@ -1,4 +1,4 @@
-# Copyright (c) 2020-2022 Qianqian Fang <q.fang at neu.edu>. All rights reserved.
+# Copyright (c) 2020-2023 Qianqian Fang <q.fang at neu.edu>. All rights reserved.
 # Copyright (c) 2016-2019 Iotic Labs Ltd. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -313,6 +313,13 @@ class TestEncodeDecodePlain(TestCase):  # pylint: disable=too-many-public-method
 
         self.assertEqual((self.bjdloadb(self.bjddumpb(np.float16(2.2)))  == 16486), True)
         self.assertEqual((self.bjdloadb(self.bjddumpb(np.float32(2.2)))  == np.float32(2.2)), True)
+
+        self.assertEqual((self.bjdloadb(self.bjddumpb(np.array([1.3,-0.5,0.7,1000,11], dtype=np.float32))) == np.array([1.3,-0.5,0.7,1000,11], dtype=np.float32)).all(), True)
+        self.assertEqual((self.bjdloadb(self.bjddumpb(np.array([1,2,3,4], dtype=np.uint16))) == np.array([1,2,3,4], dtype=np.uint16)).all(), True)
+        self.assertEqual((self.bjdloadb(self.bjddumpb(np.array([1,2,3,4], dtype=np.uint8))) == np.array([1,2,3,4], dtype=np.uint8)).all(), True)
+        self.assertEqual((self.bjdloadb(self.bjddumpb(np.array([], dtype=np.int8))) == np.array([], dtype=np.int8)).all(), True)
+        self.assertEqual((self.bjdloadb(self.bjddumpb(np.array([-1,-2,-3,-4], dtype=np.float32))) == np.array([-1,-2,-3,-4], dtype=np.float32)).all(), True)
+        self.assertEqual((self.bjdloadb(self.bjddumpb(np.array([[-1,-2,5],[-3,-4,-6]], dtype=np.float64))) == np.array([[-1,-2,5],[-3,-4,-6]], dtype=np.float64)).all(), True)
 
         raw_start = (ARRAY_START + CONTAINER_TYPE + TYPE_INT8 + CONTAINER_COUNT + ARRAY_START + \
                     TYPE_UINT8 + b'\x03' + TYPE_UINT16 + b'\x02' + b'\x00' + ARRAY_END + \

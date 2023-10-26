@@ -1,4 +1,4 @@
-# Copyright (c) 2020-2022 Qianqian Fang <q.fang at neu.edu>. All rights reserved.
+# Copyright (c) 2020-2023 Qianqian Fang <q.fang at neu.edu>. All rights reserved.
 # Copyright (c) 2016-2019 Iotic Labs Ltd. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -288,13 +288,10 @@ def __encode_numpy(fp_write, item, islittle, default):
         item = np.array( item, order = 'C')  # currently, BJData ND-array syntax only support row-major
 
     fp_write(ARRAY_START + CONTAINER_TYPE + __map_dtype(item.dtype.str) + CONTAINER_COUNT)
-    if item.ndim == 1:
-        __encode_int(fp_write, len(item), islittle)
-    else:
-        fp_write(ARRAY_START)
-        for value in item.shape:
-            __encode_int(fp_write, value, islittle)
-        fp_write(ARRAY_END)
+    fp_write(ARRAY_START)
+    for value in item.shape:
+        __encode_int(fp_write, value, islittle)
+    fp_write(ARRAY_END)
 
     fp_write(item.data)
 

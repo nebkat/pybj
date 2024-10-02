@@ -22,20 +22,21 @@ from decimal import Decimal, DecimalException
 from functools import reduce
 
 from .compat import raise_from, intern_unicode
-from .markers import (TYPE_NONE, TYPE_NULL, TYPE_NOOP, TYPE_BOOL_TRUE, TYPE_BOOL_FALSE, TYPE_INT8, TYPE_UINT8,
+from .markers import (TYPE_NONE, TYPE_NULL, TYPE_NOOP, TYPE_BOOL_TRUE, TYPE_BOOL_FALSE, TYPE_BYTE, TYPE_INT8, TYPE_UINT8,
                       TYPE_INT16, TYPE_INT32, TYPE_INT64, TYPE_FLOAT32, TYPE_FLOAT64, TYPE_HIGH_PREC, TYPE_CHAR,
 		      TYPE_UINT16, TYPE_UINT32, TYPE_UINT64, TYPE_FLOAT16,
                       TYPE_STRING, OBJECT_START, OBJECT_END, ARRAY_START, ARRAY_END, CONTAINER_TYPE, CONTAINER_COUNT)
 from numpy import array as ndarray, dtype as npdtype, frombuffer as buffer2numpy, half as halfprec
 from array import array as typedarray
 
-__TYPES = frozenset((TYPE_NULL, TYPE_BOOL_TRUE, TYPE_BOOL_FALSE, TYPE_INT8, TYPE_UINT8, TYPE_INT16, TYPE_INT32,
-                     TYPE_INT64, TYPE_FLOAT32, TYPE_FLOAT64, TYPE_UINT16, TYPE_UINT32, TYPE_UINT64, TYPE_FLOAT16, 
-		     TYPE_HIGH_PREC, TYPE_CHAR, TYPE_STRING, ARRAY_START, OBJECT_START))
+__TYPES = frozenset((TYPE_NULL, TYPE_BOOL_TRUE, TYPE_BOOL_FALSE, TYPE_BYTE, TYPE_INT8, TYPE_UINT8, TYPE_INT16,
+                     TYPE_INT32, TYPE_INT64, TYPE_FLOAT32, TYPE_FLOAT64, TYPE_UINT16, TYPE_UINT32, TYPE_UINT64,
+                     TYPE_FLOAT16, TYPE_HIGH_PREC, TYPE_CHAR, TYPE_STRING, ARRAY_START, OBJECT_START))
 __TYPES_NO_DATA = frozenset((TYPE_NULL, TYPE_BOOL_FALSE, TYPE_BOOL_TRUE))
-__TYPES_INT = frozenset((TYPE_INT8, TYPE_UINT8, TYPE_INT16, TYPE_INT32, TYPE_INT64, TYPE_UINT16, TYPE_UINT32, TYPE_UINT64))
-__TYPES_FIXLEN = frozenset((TYPE_INT8, TYPE_UINT8, TYPE_INT16, TYPE_INT32, TYPE_INT64, TYPE_UINT16, TYPE_UINT32, TYPE_UINT64,
-                     TYPE_FLOAT16, TYPE_FLOAT32, TYPE_FLOAT64, TYPE_CHAR))
+__TYPES_INT = frozenset((TYPE_BYTE, TYPE_INT8, TYPE_UINT8, TYPE_INT16, TYPE_INT32, TYPE_INT64, TYPE_UINT16,
+                         TYPE_UINT32, TYPE_UINT64))
+__TYPES_FIXLEN = frozenset((TYPE_BYTE, TYPE_INT8, TYPE_UINT8, TYPE_INT16, TYPE_INT32, TYPE_INT64, TYPE_UINT16, TYPE_UINT32,
+                            TYPE_UINT64, TYPE_FLOAT16, TYPE_FLOAT32, TYPE_FLOAT64, TYPE_CHAR))
 
 __SMALL_INTS_DECODED = [{pack('>b', i): i for i in range(-128, 128)}, {pack('<b', i): i for i in range(-128, 128)}]
 __SMALL_UINTS_DECODED = [{pack('>B', i): i for i in range(256)}, {pack('<B', i): i for i in range(256)}]
@@ -49,7 +50,8 @@ __UNPACK_FLOAT16 = [Struct('>h').unpack, Struct('<h').unpack]
 __UNPACK_FLOAT32 = [Struct('>f').unpack, Struct('<f').unpack]
 __UNPACK_FLOAT64 = [Struct('>d').unpack, Struct('<d').unpack]
 
-__DTYPE_MAP = { TYPE_INT8: 'b',
+__DTYPE_MAP = { TYPE_BYTE: 'B',
+                TYPE_INT8: 'b',
                 TYPE_UINT8: 'B',
                 TYPE_INT16: 'h',
                 TYPE_UINT16: 'H',
@@ -62,7 +64,8 @@ __DTYPE_MAP = { TYPE_INT8: 'b',
                 TYPE_FLOAT64: 'd',
                 TYPE_CHAR: 'c'}
 
-__DTYPELEN_MAP={ TYPE_INT8: 1,
+__DTYPELEN_MAP={ TYPE_BYTE: 1,
+                TYPE_INT8: 1,
                 TYPE_UINT8: 1,
                 TYPE_INT16: 2,
                 TYPE_UINT16: 2,
@@ -227,6 +230,7 @@ def __decode_object_key(fp_read, marker, intern_object_keys, le=1):
 __METHOD_MAP = {TYPE_NULL: (lambda _, __, ___: None),
                 TYPE_BOOL_TRUE: (lambda _, __, ___: True),
                 TYPE_BOOL_FALSE: (lambda _, __, ___: False),
+                TYPE_BYTE: __decode_uint8,
                 TYPE_INT8: __decode_int8,
                 TYPE_UINT8: __decode_uint8,
                 TYPE_INT16: __decode_int16,
@@ -248,7 +252,7 @@ def prodlist(mylist):
          result = result * x
     return result
 
-def __get_container_params(fp_read, in_mapping, no_bytes, object_hook, object_pairs_hook, intern_object_keys, islittle):
+def __get_container_params(fp_read, in_mapping, object_hook, object_pairs_hook, intern_object_keys, islittle):
     marker = fp_read(1)
     dims = []
     if marker == CONTAINER_TYPE:
@@ -262,7 +266,7 @@ def __get_container_params(fp_read, in_mapping, no_bytes, object_hook, object_pa
     if marker == CONTAINER_COUNT:
         marker = fp_read(1)
         if marker == ARRAY_START:
-            dims = __decode_array(fp_read, no_bytes, object_hook, object_pairs_hook, intern_object_keys, islittle)
+            dims = __decode_array(fp_read, object_hook, object_pairs_hook, intern_object_keys, islittle)
             count = prodlist(dims)
         else:
             count = __decode_int_non_negative(fp_read, marker, islittle)
@@ -270,7 +274,7 @@ def __get_container_params(fp_read, in_mapping, no_bytes, object_hook, object_pa
 
         # special cases (no data (None or bool) / bytes array) will be handled in calling functions
         if not (type_ in __TYPES_NO_DATA or
-                (type_ == TYPE_UINT8 and not in_mapping and not no_bytes)):
+                (type_ == TYPE_BYTE and not in_mapping)):
             # Reading ahead is just to capture type, which will not exist if type is fixed
             marker = fp_read(1) if (in_mapping or type_ == TYPE_NONE) else type_
 
@@ -283,9 +287,9 @@ def __get_container_params(fp_read, in_mapping, no_bytes, object_hook, object_pa
     return marker, counting, count, type_, dims
 
 
-def __decode_object(fp_read, no_bytes, object_hook, object_pairs_hook,  # pylint: disable=too-many-branches
+def __decode_object(fp_read, object_hook, object_pairs_hook,  # pylint: disable=too-many-branches
                     intern_object_keys, islittle):
-    marker, counting, count, type_, dims = __get_container_params(fp_read, True, no_bytes,object_hook, object_pairs_hook,intern_object_keys, islittle)
+    marker, counting, count, type_, dims = __get_container_params(fp_read, True, object_hook, object_pairs_hook,intern_object_keys, islittle)
     has_pairs_hook = object_pairs_hook is not None
     obj = [] if has_pairs_hook else {}
 
@@ -323,9 +327,9 @@ def __decode_object(fp_read, no_bytes, object_hook, object_pairs_hook,  # pylint
         # handle outside above except (on KeyError) so do not have unfriendly "exception within except" backtrace
         if not handled:
             if marker == ARRAY_START:
-                value = __decode_array(fp_read, no_bytes, object_hook, object_pairs_hook, intern_object_keys, islittle)
+                value = __decode_array(fp_read, object_hook, object_pairs_hook, intern_object_keys, islittle)
             elif marker == OBJECT_START:
-                value = __decode_object(fp_read, no_bytes, object_hook, object_pairs_hook, intern_object_keys, islittle)
+                value = __decode_object(fp_read, object_hook, object_pairs_hook, intern_object_keys, islittle)
             else:
                 raise DecoderException('Invalid marker within object')
 
@@ -341,15 +345,15 @@ def __decode_object(fp_read, no_bytes, object_hook, object_pairs_hook,  # pylint
     return object_pairs_hook(obj) if has_pairs_hook else object_hook(obj)
 
 
-def __decode_array(fp_read, no_bytes, object_hook, object_pairs_hook, intern_object_keys, islittle):
-    marker, counting, count, type_, dims = __get_container_params(fp_read, False, no_bytes, object_hook, object_pairs_hook, intern_object_keys, islittle)
+def __decode_array(fp_read, object_hook, object_pairs_hook, intern_object_keys, islittle):
+    marker, counting, count, type_, dims = __get_container_params(fp_read, False, object_hook, object_pairs_hook, intern_object_keys, islittle)
 
     # special case - no data (None or bool)
     if type_ in __TYPES_NO_DATA:
         return [__METHOD_MAP[type_](fp_read, type_, islittle)] * count
 
     # special case - bytes array
-    if type_ == TYPE_UINT8 and not no_bytes and len(dims)==0:
+    if type_ == TYPE_BYTE and len(dims)==0:
         container = fp_read(count)
         if len(container) < count:
             raise DecoderException('Container bytes array too short')
@@ -388,9 +392,9 @@ def __decode_array(fp_read, no_bytes, object_hook, object_pairs_hook, intern_obj
         # handle outside above except (on KeyError) so do not have unfriendly "exception within except" backtrace
         if not handled:
             if marker == ARRAY_START:
-                value = __decode_array(fp_read, no_bytes, object_hook, object_pairs_hook, intern_object_keys, islittle)
+                value = __decode_array(fp_read, object_hook, object_pairs_hook, intern_object_keys, islittle)
             elif marker == OBJECT_START:
-                value = __decode_object(fp_read, no_bytes, object_hook, object_pairs_hook, intern_object_keys, islittle)
+                value = __decode_object(fp_read, object_hook, object_pairs_hook, intern_object_keys, islittle)
             else:
                 raise DecoderException('Invalid marker within array')
 
@@ -411,14 +415,11 @@ def __object_hook_noop(obj):
     return obj
 
 
-def load(fp, no_bytes=False, object_hook=None, object_pairs_hook=None, intern_object_keys=False, islittle=True):
+def load(fp, object_hook=None, object_pairs_hook=None, intern_object_keys=False, islittle=True):
     """Decodes and returns BJData/UBJSON from the given file-like object
 
     Args:
         fp: read([size])-able object
-        no_bytes (bool): If set, typed UBJSON arrays (uint8) will not be
-                         converted to a bytes instance and instead treated like
-                         any other array (i.e. result in a list).
         object_hook (callable): Called with the result of any object literal
                                 decoded (instead of dict).
         object_pairs_hook (callable): Called with the result of any object
@@ -454,13 +455,13 @@ def load(fp, no_bytes=False, object_hook=None, object_pairs_hook=None, intern_ob
         |                                  | (2) unicode   |
         +----------------------------------+---------------+
         | uint8, int8, int16, int32, int64 | (3) int       |
-        |                                  | (2) int, long |
+        | byte                             | (2) int, long |
         +----------------------------------+---------------+
         | float32, float64                 | float         |
         +----------------------------------+---------------+
         | high_precision                   | Decimal       |
         +----------------------------------+---------------+
-        | array (typed, uint8)             | (3) bytes     |
+        | array (typed, byte)              | (3) bytes     |
         |                                  | (2) str       |
         +----------------------------------+---------------+
         | true                             | True          |
@@ -489,9 +490,9 @@ def load(fp, no_bytes=False, object_hook=None, object_pairs_hook=None, intern_ob
             except KeyError:
                 pass
             if marker == ARRAY_START:
-                newobj.append(__decode_array(fp_read, bool(no_bytes), object_hook, object_pairs_hook, intern_object_keys, islittle))
+                newobj.append(__decode_array(fp_read, object_hook, object_pairs_hook, intern_object_keys, islittle))
             if marker == OBJECT_START:
-                newobj.append(__decode_object(fp_read, bool(no_bytes), object_hook, object_pairs_hook, intern_object_keys, islittle))
+                newobj.append(__decode_object(fp_read, object_hook, object_pairs_hook, intern_object_keys, islittle))
             raise DecoderException('Invalid marker')
         except DecoderException as ex:
             if len(newobj)>0:
@@ -505,9 +506,9 @@ def load(fp, no_bytes=False, object_hook=None, object_pairs_hook=None, intern_ob
 
     return newobj;
 
-def loadb(chars, no_bytes=False, object_hook=None, object_pairs_hook=None, intern_object_keys=False, islittle=True):
+def loadb(chars, object_hook=None, object_pairs_hook=None, intern_object_keys=False, islittle=True):
     """Decodes and returns BJData/UBJSON from the given bytes or bytesarray object. See
        load() for available arguments."""
     with BytesIO(chars) as fp:
-        return load(fp, no_bytes=no_bytes, object_hook=object_hook, object_pairs_hook=object_pairs_hook,
+        return load(fp, object_hook=object_hook, object_pairs_hook=object_pairs_hook,
                     intern_object_keys=intern_object_keys, islittle=islittle)

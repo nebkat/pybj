@@ -22,9 +22,9 @@ from io import BytesIO
 from math import isinf, isnan
 
 from .compat import Mapping, Sequence, INTEGER_TYPES, UNICODE_TYPE, TEXT_TYPES, BYTES_TYPES
-from .markers import (TYPE_NULL, TYPE_BOOL_TRUE, TYPE_BOOL_FALSE, TYPE_INT8, TYPE_UINT8, TYPE_INT16, TYPE_INT32,
-                      TYPE_INT64, TYPE_UINT16, TYPE_UINT32, TYPE_UINT64, TYPE_FLOAT16, TYPE_FLOAT32, 
-		      TYPE_FLOAT64, TYPE_HIGH_PREC, TYPE_CHAR, TYPE_STRING, OBJECT_START,
+from .markers import (TYPE_NULL, TYPE_BOOL_TRUE, TYPE_BOOL_FALSE, TYPE_BYTE, TYPE_INT8, TYPE_UINT8, TYPE_INT16,
+                      TYPE_INT32, TYPE_INT64, TYPE_UINT16, TYPE_UINT32, TYPE_UINT64, TYPE_FLOAT16, TYPE_FLOAT32,
+                      TYPE_FLOAT64, TYPE_HIGH_PREC, TYPE_CHAR, TYPE_STRING, OBJECT_START,
                       OBJECT_END, ARRAY_START, ARRAY_END, CONTAINER_TYPE, CONTAINER_COUNT)
 
 # Lookup tables for encoding small intergers, pre-initialised larger integer & float packers
@@ -57,7 +57,7 @@ __DTYPE_TO_MARKER = {
 }
 
 # Prefix applicable to specialised byte array container
-__BYTES_ARRAY_PREFIX = ARRAY_START + CONTAINER_TYPE + TYPE_UINT8 + CONTAINER_COUNT
+__BYTES_ARRAY_PREFIX = ARRAY_START + CONTAINER_TYPE + TYPE_BYTE + CONTAINER_COUNT
 
 
 class EncoderException(TypeError):
@@ -342,8 +342,8 @@ def dump(obj, fp, container_count=False, sort_keys=False, no_float32=True, islit
     +------------------------------+-----------------------------------+
     | Decimal                      | high_precision                    |
     +------------------------------+-----------------------------------+
-    | (3) bytes, bytearray         | array (type, uint8)               |
-    | (2) str                      | array (type, uint8)               |
+    | (3) bytes, bytearray         | array (type, byte)                |
+    | (2) str                      | array (type, byte)                |
     +------------------------------+-----------------------------------+
     | (3) collections.abc.Mapping  | object                            |
     | (2) collections.Mapping      |                                   |

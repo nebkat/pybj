@@ -569,6 +569,7 @@ static long long _decode_int_non_negative(_bjdata_decoder_buffer_t *buffer, char
     }
 
     switch (marker) {
+        case TYPE_BYTE:
         case TYPE_UINT8:
             BAIL_ON_NULL(int_obj = _decode_uint8(buffer));
             break;
@@ -716,7 +717,7 @@ static _container_params_t _get_container_params(_bjdata_decoder_buffer_t *buffe
             case TYPE_NULL: case TYPE_BOOL_TRUE: case TYPE_BOOL_FALSE: case TYPE_CHAR: case TYPE_STRING: case TYPE_INT8:
             case TYPE_UINT8: case TYPE_INT16: case TYPE_INT32: case TYPE_INT64: case TYPE_FLOAT32: case TYPE_FLOAT64:
 #ifdef USE__BJDATA
-            case TYPE_UINT16: case TYPE_UINT32: case TYPE_UINT64: case TYPE_FLOAT16:
+            case TYPE_UINT16: case TYPE_UINT32: case TYPE_UINT64: case TYPE_FLOAT16: case TYPE_BYTE:
 #endif
             case TYPE_HIGH_PREC: case ARRAY_START: case OBJECT_START:
                 params.type = marker;
@@ -803,7 +804,8 @@ static int _is_fixed_len_type(char type) {
     return ((TYPE_INT8 == type) || (TYPE_UINT8 == type) || (TYPE_INT16 == type)
          || (TYPE_UINT16 == type) || (TYPE_INT32 == type) || (TYPE_UINT32 == type)
          || (TYPE_INT64 == type) || (TYPE_UINT64 == type) || (TYPE_CHAR == type)
-         || (TYPE_FLOAT16 == type) || (TYPE_FLOAT32 == type) || (TYPE_FLOAT64 == type));
+         || (TYPE_FLOAT16 == type) || (TYPE_FLOAT32 == type) || (TYPE_FLOAT64 == type))
+         || (TYPE_BYTE == type);
 }
 
 // Note: Does NOT reserve a new reference
@@ -821,6 +823,7 @@ static int _get_type_info(char type, int *bytelen) {
         case TYPE_INT8:
 	    *bytelen=1;
             return PyArray_BYTE;
+        case TYPE_BYTE:
         case TYPE_UINT8:
 	    *bytelen=1;
             return PyArray_UBYTE;
@@ -881,7 +884,7 @@ static PyObject* _decode_array(_bjdata_decoder_buffer_t *buffer) {
     marker = params.marker;
     if (params.counting) {
         // special case - byte array
-        if ((TYPE_UINT8 == params.type) && !buffer->prefs.no_bytes && ndims==0) {
+        if ((TYPE_BYTE == params.type) && !buffer->prefs.no_bytes && ndims==0) {
             BAIL_ON_NULL(list = PyBytes_FromStringAndSize(NULL, params.count));
             READ_INTO_OR_BAIL(params.count, PyBytes_AS_STRING(list), "bytes array");
             return list;
@@ -1211,6 +1214,7 @@ PyObject* _bjdata_decode_value(_bjdata_decoder_buffer_t *buffer, char *given_mar
         case TYPE_INT64:
             RETURN_OR_RAISE_DECODER_EXCEPTION(_decode_int64(buffer), "int64");
 #ifdef USE__BJDATA
+        case TYPE_BYTE:
         case TYPE_UINT8:
             RETURN_OR_RAISE_DECODER_EXCEPTION(_decode_uint8(buffer), "uint8");
         case TYPE_FLOAT16:

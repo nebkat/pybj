@@ -829,44 +829,45 @@ static int _get_type_info(char type, int *bytelen) {
     switch (type) {
         case TYPE_FLOAT16:
 	    *bytelen=2;
-            return PyArray_HALF;
+            return NPY_HALF;
         case TYPE_FLOAT32:
 	    *bytelen=4;
-            return PyArray_FLOAT;
+            return NPY_FLOAT;
         case TYPE_FLOAT64:
 	    *bytelen=8;
-            return PyArray_DOUBLE;
+            return NPY_DOUBLE;
         case TYPE_INT8:
 	    *bytelen=1;
-            return PyArray_BYTE;
+            return NPY_BYTE;
+        case TYPE_BYTE:
         case TYPE_UINT8:
 	    *bytelen=1;
-            return PyArray_UBYTE;
+            return NPY_UBYTE;
         case TYPE_INT16:
 	    *bytelen=2;
-            return PyArray_SHORT;
+            return NPY_SHORT;
         case TYPE_UINT16:
 	    *bytelen=2;
-            return PyArray_USHORT;
+            return NPY_USHORT;
         case TYPE_INT32:
 	    *bytelen=4;
-            return PyArray_INT;
+            return NPY_INT;
         case TYPE_UINT32:
 	    *bytelen=4;
-            return PyArray_UINT;
+            return NPY_UINT;
         case TYPE_INT64:
 	    *bytelen=8;
-            return PyArray_LONGLONG;
+            return NPY_LONGLONG;
         case TYPE_UINT64:
 	    *bytelen=8;
-            return PyArray_ULONGLONG;
+            return NPY_ULONGLONG;
         case TYPE_CHAR:
 	    *bytelen=1;
-            return PyArray_STRING;
+            return NPY_STRING;
         default:
 	    *bytelen=0;
             PyErr_SetString(PyExc_RuntimeError, "Internal error - _get_type_info");
-            return PyArray_USERDEF;
+            return NPY_USERDEF;
     }
 }
 
